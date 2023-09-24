@@ -29,12 +29,12 @@ Logger = logging.getLogger(__name__)
 def main(char_names, conn_mem, cur_mem, conn_dsk, cur_dsk):
     chars_found = get_char_ids(conn_mem, cur_mem, char_names)
     if chars_found > 0:
-        # Run Pyspy remote database query in seprate thread
-        tp = threading.Thread(
-            target=get_character_intel(conn_mem, cur_mem),
-            daemon=True
-            )
-        tp.start()
+        # # Run Pyspy remote database query in seprate thread
+        # tp = threading.Thread(
+        #     target=get_character_intel(conn_mem, cur_mem),
+        #     daemon=True
+        #     )
+        # tp.start()
 
         # Run zKill query in seprate thread
         char_ids_mem = cur_mem.execute(
@@ -76,7 +76,7 @@ def main(char_names, conn_mem, cur_mem, conn_dsk, cur_dsk):
             entry.insert(-1, update_datetime)
         query_string = (
             '''UPDATE characters SET kills=?, blops_kills=?, hic_losses=?,
-            week_kills=?, losses=?, solo_ratio=?, sec_status=?, last_update=?
+            week_kills=?, losses=?, solo_ratio=?, sec_status=?, miner_kills=?, last_update=?
             WHERE char_id=?'''
             )
 
@@ -84,7 +84,7 @@ def main(char_names, conn_mem, cur_mem, conn_dsk, cur_dsk):
         for char_id in cache_hits:
             # kills, blops_kills, hic_losses, week_kills, losses, solo_ratio, sec_status, id
             cache_query = '''SELECT kills, blops_kills, hic_losses, week_kills, losses, solo_ratio,
-             sec_status, last_update, char_id FROM characters WHERE char_id = ?'''
+             sec_status, miner_kills, last_update, char_id FROM characters WHERE char_id = ?'''
             stat = tuple(cur_dsk.execute(cache_query, (char_id,)).fetchone()) #SHOULD ONLY BE ONE ENTRY!!!
             cache_stats.append(stat)
 
@@ -99,7 +99,7 @@ def main(char_names, conn_mem, cur_mem, conn_dsk, cur_dsk):
         db.write_many_to_db(conn_mem, cur_mem, query_string, cache_stats)
 
         # Join Pyspy remote database thread
-        tp.join()
+        # tp.join()
         output = output_list(cur_mem)
         conn_mem.close()
         return output
@@ -220,9 +220,10 @@ class zKillStats(threading.Thread):
             solo_ratio = str(s[5])
             sec_status = str(s[6])
             id = str(s[7])
+            miner_kills = str(s[8])
             zkill_stats.append([
                 kills, blops_kills, hic_losses, week_kills, losses, solo_ratio,
-                sec_status, id
+                sec_status, id, miner_kills
                 ])
         self._q_main.put(zkill_stats)
         return
@@ -272,7 +273,7 @@ def output_list(cur):
         ch.hic_losses, ch.losses, ch.solo_ratio, ch.sec_status,
         ch.last_loss_date, ch.last_kill_date,
         ch.avg_attackers, ch.covert_prob, ch.normal_prob,
-        IFNULL(cs.name,'-'), IFNULL(ns.name,'-'), ch.abyssal_losses
+        IFNULL(cs.name,'-'), IFNULL(ns.name,'-'), ch.abyssal_losses, ch.miner_kills
         FROM characters AS ch
         LEFT JOIN alliances AS al ON ch.alliance_id = al.id
         LEFT JOIN corporations AS co ON ch.corp_id = co.id

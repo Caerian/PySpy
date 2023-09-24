@@ -10,6 +10,7 @@ import os
 import platform
 import sys
 import uuid
+import re
 
 import requests
 import wx  # required for colour codes in DARK_MODE
@@ -33,7 +34,10 @@ def resource_path(relative_path):
         base_path = os.path.dirname(__file__)
 
     return os.path.join(base_path, relative_path)
-
+    
+# Identify wxPython version (not wxWidgets version).
+wx_major, wx_minor, wx_rev = \
+        map(int, re.match(r"([0-9]+)\.([0-9]+)(?:\.([0-9]+))", wx.__version__).groups())
 
 # If application is frozen executable
 if getattr(sys, 'frozen', False):

@@ -145,9 +145,17 @@ class Query_zKill(threading.Thread):
         except (KeyError, TypeError):
             sec_status = 0
 
+        try:
+            barge_kills = r["groups"]["463"]["shipsDestroyed"]
+            exhumer_kills = r["groups"]["543"]["shipsDestroyed"]
+            command_kills = r["groups"]["941"]["shipsDestroyed"]
+            miner_kills = barge_kills + exhumer_kills + command_kills
+        except (KeyError, TypeError):
+            miner_kills = 0
+        
         self._queue.put(
             [kills, blops_kills, hic_losses, week_kills, losses, solo_ratio,
-            sec_status, self._char_id]
+            sec_status, miner_kills, self._char_id]
             )
         return
 

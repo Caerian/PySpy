@@ -67,7 +67,7 @@ def analyze_chars(char_names):
     try:
         outlist = analyze.main(char_names, conn_mem, cur_mem, conn_dsk, cur_dsk)
         duration = round(time.time() - start_time, 1)
-        reportstats.ReportStats(outlist, duration).start()
+        #reportstats.ReportStats(outlist, duration).start()
         if outlist is not None:
             # Need to use keyword args as sortOutlist can also get called
             # by event handler which would pass event object as first argument.

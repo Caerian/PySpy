@@ -59,7 +59,7 @@ def prepare_tables(conn, cur):
         solo_ratio NUMERIC, sec_status NUMERIC, last_loss_date INT,
         last_kill_date INT, avg_attackers NUMERIC, covert_prob NUMERIC,
         normal_prob NUMERIC, last_cov_ship INT, last_norm_ship INT,
-        abyssal_losses INT, last_update TEXT)'''
+        abyssal_losses INT, miner_kills INT, last_update TEXT)'''
         )
     cur.execute(
         '''CREATE TABLE IF NOT EXISTS corporations (id INT PRIMARY KEY, name TEXT)'''

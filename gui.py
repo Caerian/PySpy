@@ -51,7 +51,7 @@ class Frame(wx.Frame):
         self.columns = (
             # Index, Heading, Format, Default Width, Can Toggle, Default Show, Menu Name, Outlist Column
             [0, "ID", wx.ALIGN_LEFT, 0, False, False, "", 0],
-            [1, "Warning", wx.ALIGN_LEFT, 80, True, True, "Warning\tCTRL+ALT+X"],
+            [1, "Warning", wx.ALIGN_LEFT, 80, True, False, "Warning\tCTRL+ALT+X"],
             [2, "Faction ID", wx.ALIGN_LEFT, 0, False, False, "", 1],
             [3, "Character", wx.ALIGN_LEFT, 100, False, True, "", 2],
             [4, "Security", wx.ALIGN_RIGHT, 50, True, False, "&Security\tCTRL+ALT+S", 15],
@@ -62,19 +62,20 @@ class Frame(wx.Frame):
             [9, "Faction", wx.ALIGN_LEFT, 50, True, False, "&Faction\tCTRL+ALT+F", 7],
             [10, "Kills", wx.ALIGN_RIGHT, 50, True, True, "&Kills\tCTRL+ALT+K", 10],
             [11, "Losses", wx.ALIGN_RIGHT, 50, True, True, "&Losses\tCTRL+ALT+L", 13],
-            [12, "Last Wk", wx.ALIGN_RIGHT, 50, True, True, "Last &Wk\tCTRL+ALT+W", 9],
+            [12, "Last Wk", wx.ALIGN_RIGHT, 50, True, False, "Last &Wk\tCTRL+ALT+W", 9],
             [13, "Solo", wx.ALIGN_RIGHT, 50, True, False, "S&olo\tCTRL+ALT+O", 14],
             [14, "BLOPS", wx.ALIGN_RIGHT, 50, True, False, "&BLOPS\tCTRL+ALT+B", 11],
             [15, "HICs", wx.ALIGN_RIGHT, 50, True, False, "&HICs\tCTRL+ALT+H", 12],
-            [16, "Last Loss", wx.ALIGN_RIGHT, 60, True, True, "Days since last Loss\tCTRL+ALT+[", 16],
-            [17, "Last Kill", wx.ALIGN_RIGHT, 60, True, True, "Days since last Kill\tCTRL+ALT+]", 17],
-            [18, "Avg. Attackers", wx.ALIGN_RIGHT, 100, True, True, "&Average Attackers\tCTRL+ALT+A", 18],
-            [19, "Covert Cyno", wx.ALIGN_RIGHT, 100, True, True, "&Covert Cyno Probability\tCTRL+ALT+C", 19],
-            [20, "Regular Cyno", wx.ALIGN_RIGHT, 100, True, True, "&Regular Cyno Probability\tCTRL+ALT+R", 20],
-            [21, "Last Covert Cyno", wx.ALIGN_RIGHT, 100, True, True, "&Last Covert Cyno Ship Loss\tCTRL+ALT+<", 21],
-            [22, "Last Regular Cyno", wx.ALIGN_RIGHT, 110, True, True, "&Last Regular Cyno Ship Loss\tCTRL+ALT+>", 22],
+            [16, "Last Loss", wx.ALIGN_RIGHT, 60, True, False, "Days since last Loss\tCTRL+ALT+[", 16],
+            [17, "Last Kill", wx.ALIGN_RIGHT, 60, True, False, "Days since last Kill\tCTRL+ALT+]", 17],
+            [18, "Avg. Attackers", wx.ALIGN_RIGHT, 100, True, False, "&Average Attackers\tCTRL+ALT+A", 18],
+            [19, "Covert Cyno", wx.ALIGN_RIGHT, 100, True, False, "&Covert Cyno Probability\tCTRL+ALT+C", 19],
+            [20, "Regular Cyno", wx.ALIGN_RIGHT, 100, True, False, "&Regular Cyno Probability\tCTRL+ALT+R", 20],
+            [21, "Last Covert Cyno", wx.ALIGN_RIGHT, 100, True, False, "&Last Covert Cyno Ship Loss\tCTRL+ALT+<", 21],
+            [22, "Last Regular Cyno", wx.ALIGN_RIGHT, 110, True, False, "&Last Regular Cyno Ship Loss\tCTRL+ALT+>", 22],
             [23, "Abyssal Losses", wx.ALIGN_RIGHT, 100, True, False, "&Abyssal Losses\tCTRL+ALT+Y", 23],
-            [24, "", None, 1, False, True, ""],  # Need for _stretchLastCol()
+            [24, "Miner", wx.ALIGN_RIGHT, 60, True, True, "&Miner Kills", 24],
+            [25, "", None, 1, False, True, ""],  # Need for _stretchLastCol()
             )
 
         # Define the menu bar and menu items
@@ -356,8 +357,12 @@ class Frame(wx.Frame):
         sizer_bottom.Add(self.status_label, 1, wx.ALIGN_CENTER_VERTICAL, 0)
         static_line = wx.StaticLine(self, wx.ID_ANY, style=wx.LI_VERTICAL)
         sizer_bottom.Add(static_line, 0, wx.EXPAND, 0)
-        sizer_bottom.Add(self.alpha_slider, 0, wx.ALIGN_RIGHT, 0)
-        sizer_main.Add(sizer_bottom, 0, wx.ALIGN_BOTTOM | wx.ALL | wx.EXPAND, 1)
+        if config.wx_minor < 1:
+            sizer_bottom.Add(self.alpha_slider, 0, wx.ALIGN_RIGHT, 0)
+            sizer_main.Add(sizer_bottom, 0, wx.ALIGN_BOTTOM | wx.ALL | wx.EXPAND, 1)
+        else:
+            sizer_bottom.Add(self.alpha_slider)
+            sizer_main.Add(sizer_bottom, 0, wx.ALL | wx.EXPAND, 1)
         self.SetSizer(sizer_main)
         self.Layout()
         self._restoreColWidth()
@@ -561,6 +566,7 @@ class Frame(wx.Frame):
                 losses = "{:,}".format(int(r[13]))
                 solo_ratio = "{:.0%}".format(float(r[14]))
                 sec_status = "{:.1f}".format(float(r[15]))
+                miner_kills = r[24] if int(r[24]) >0 else "-"
 
             # PySpy proprietary data is "n.a." unless available
             last_loss = last_kill = covert_ship = normal_ship = "n.a."
@@ -617,7 +623,8 @@ class Frame(wx.Frame):
                 normal_prob,
                 covert_ship,
                 normal_ship,
-                abyssal_losses
+                abyssal_losses,
+                miner_kills
                 ]
 
             # Check if character belongs to a faction that should be ignored
@@ -640,7 +647,11 @@ class Frame(wx.Frame):
             for value in out:
                 color = False
                 self.grid.SetCellValue(rowidx, colidx, str(value))
-                self.grid.SetCellAlignment(self.columns[colidx][2], rowidx, colidx)
+                if config.wx_minor < 1:
+                    self.grid.SetCellAlignment(self.columns[colidx][2], rowidx, colidx)
+                else:
+                    self.grid.SetCellAlignment(rowidx, colidx, self.columns[colidx][2], wx.ALIGN_CENTER)
+
                 if hl_blops and r[9] is not None and r[11] > 0:  # Highlight BLOPS chars
                     self.grid.SetCellTextColour(rowidx, colidx, self.hl1_colour)
                     color = True
